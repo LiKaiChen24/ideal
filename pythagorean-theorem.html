@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勾股定理互动演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .triangle-shadow {
+                filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            }
+            .square-hover {
+                transition: all 0.3s ease;
+            }
+            .square-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-light to-blue-50 min-h-screen font-sans text-dark">
+    <header class="container mx-auto px-4 py-8">
+        <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-center text-primary mb-2">勾股定理互动演示</h1>
+        <p class="text-[clamp(1rem,2vw,1.25rem)] text-center text-gray-600 max-w-3xl mx-auto">
+            探索直角三角形三条边的关系，通过动态可视化理解数学原理
+        </p>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <!-- 演示区域 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                <h2 class="text-2xl font-bold text-dark mb-4">直观演示</h2>
+                
+                <div class="relative w-full h-[300px] md:h-[400px] mb-6">
+                    <div id="triangle-container" class="absolute inset-0 flex items-center justify-center">
+                        <!-- 勾股定理可视化将通过JS动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-red-500"></div>
+                        <span>边 a (红色)</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+                        <span>边 b (蓝色)</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                        <span>斜边 c (绿色)</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-4">
+                    <div>
+                        <label for="side-a" class="block text-sm font-medium text-gray-700 mb-1">边 a 的长度</label>
+                        <input type="range" id="side-a" min="3" max="15" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>3</span>
+                            <span id="a-value">3</span>
+                            <span>15</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="side-b" class="block text-sm font-medium text-gray-700 mb-1">边 b 的长度</label>
+                        <input type="range" id="side-b" min="3" max="15" value="4" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>3</span>
+                            <span id="b-value">4</span>
+                            <span>15</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-4 mt-6">
+                        <button id="animate-btn" class="px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition-all duration-200 flex items-center">
+                            <i class="fa fa-play mr-2"></i> 开始动画
+                        </button>
+                        <button id="reset-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg shadow hover:bg-gray-300 transition-all duration-200 flex items-center">
+                            <i class="fa fa-refresh mr-2"></i> 重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 知识讲解区域 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                <h2 class="text-2xl font-bold text-dark mb-4">勾股定理详解</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">什么是勾股定理？</h3>
+                        <p class="text-gray-700 leading-relaxed">
+                            勾股定理（又称毕达哥拉斯定理）是一个基本的几何定理，指的是在一个直角三角形中，斜边的平方等于另外两条直角边的平方和。
+                        </p>
+                        <div class="mt-3 bg-gray-50 p-4 rounded-lg">
+                            <p class="text-center text-xl font-bold text-dark">a² + b² = c²</p>
+                            <p class="text-center text-gray-600 mt-1">其中，a和b是直角边，c是斜边</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">历史背景</h3>
+                        <p class="text-gray-700 leading-relaxed">
+                            勾股定理约在公元前11世纪的中国西周时期就被发现，记载于《周髀算经》中。在西方，它被称为毕达哥拉斯定理，以古希腊数学家毕达哥拉斯命名，尽管他是否是第一个证明该定理的人存在争议。
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">应用场景</h3>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>建筑和工程中的测量与布局</li>
+                            <li>导航和地理定位系统</li>
+                            <li>计算机图形学中的距离计算</li>
+                            <li>物理学中的向量分解</li>
+                            <li>密码学中的安全算法</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">当前示例计算</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-red-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">边 a</p>
+                                <p class="text-xl font-bold text-red-500" id="calc-a">3</p>
+                                <p class="text-xs text-gray-500">a² = <span id="a-squared">9</span></p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">边 b</p>
+                                <p class="text-xl font-bold text-blue-500" id="calc-b">4</p>
+                                <p class="text-xs text-gray-500">b² = <span id="b-squared">16</span></p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">斜边 c</p>
+                                <p class="text-xl font-bold text-green-500" id="calc-c">5</p>
+                                <p class="text-xs text-gray-500">c² = <span id="c-squared">25</span></p>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600">验证</p>
+                                <p class="text-xl font-bold text-purple-500" id="verification">9 + 16 = 25</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 更多示例区域 -->
+        <div class="mt-10 bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+            <h2 class="text-2xl font-bold text-dark mb-6">常见勾股数示例</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">3-4-5</h3>
+                    <p class="text-gray-700">3² + 4² = 5²</p>
+                    <p class="text-gray-600 text-sm mt-1">9 + 16 = 25</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">5-12-13</h3>
+                    <p class="text-gray-700">5² + 12² = 13²</p>
+                    <p class="text-gray-600 text-sm mt-1">25 + 144 = 169</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">6-8-10</h3>
+                    <p class="text-gray-700">6² + 8² = 10²</p>
+                    <p class="text-gray-600 text-sm mt-1">36 + 64 = 100</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">7-24-25</h3>
+                    <p class="text-gray-700">7² + 24² = 25²</p>
+                    <p class="text-gray-600 text-sm mt-1">49 + 576 = 625</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">8-15-17</h3>
+                    <p class="text-gray-700">8² + 15² = 17²</p>
+                    <p class="text-gray-600 text-sm mt-1">64 + 225 = 289</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg square-hover border border-gray-200">
+                    <h3 class="font-semibold text-primary mb-2">9-40-41</h3>
+                    <p class="text-gray-700">9² + 40² = 41²</p>
+                    <p class="text-gray-600 text-sm mt-1">81 + 1600 = 1681</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="container mx-auto px-4 py-8 mt-10 text-center text-gray-500 text-sm">
+        <p>© 2025 勾股定理互动演示 | 一个帮助理解数学原理的教育工具</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const triangleContainer = document.getElementById('triangle-container');
+            const sideAInput = document.getElementById('side-a');
+            const sideBInput = document.getElementById('side-b');
+            const aValueDisplay = document.getElementById('a-value');
+            const bValueDisplay = document.getElementById('b-value');
+            const calcA = document.getElementById('calc-a');
+            const calcB = document.getElementById('calc-b');
+            const calcC = document.getElementById('calc-c');
+            const aSquared = document.getElementById('a-squared');
+            const bSquared = document.getElementById('b-squared');
+            const cSquared = document.getElementById('c-squared');
+            const verification = document.getElementById('verification');
+            const animateBtn = document.getElementById('animate-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            
+            // 设置初始值
+            let a = parseInt(sideAInput.value);
+            let b = parseInt(sideBInput.value);
+            let c = Math.sqrt(a * a + b * b);
+            
+            // 绘制初始三角形和正方形
+            drawTriangleAndSquares(a, b);
+            updateCalculations();
+            
+            // 监听滑块变化
+            sideAInput.addEventListener('input', function() {
+                a = parseInt(this.value);
+                aValueDisplay.textContent = a;
+                drawTriangleAndSquares(a, b);
+                updateCalculations();
+            });
+            
+            sideBInput.addEventListener('input', function() {
+                b = parseInt(this.value);
+                bValueDisplay.textContent = b;
+                drawTriangleAndSquares(a, b);
+                updateCalculations();
+            });
+            
+            // 动画按钮点击事件
+            animateBtn.addEventListener('click', function() {
+                animateSquares();
+                this.innerHTML = '<i class="fa fa-refresh mr-2"></i> 重新播放';
+            });
+            
+            // 重置按钮点击事件
+            resetBtn.addEventListener('click', function() {
+                sideAInput.value = 3;
+                sideBInput.value = 4;
+                a = 3;
+                b = 4;
+                aValueDisplay.textContent = a;
+                bValueDisplay.textContent = b;
+                drawTriangleAndSquares(a, b);
+                updateCalculations();
+                animateBtn.innerHTML = '<i class="fa fa-play mr-2"></i> 开始动画';
+            });
+            
+            // 绘制三角形和正方形
+            function drawTriangleAndSquares(a, b) {
+                // 清除现有内容
+                triangleContainer.innerHTML = '';
+                
+                // 计算斜边
+                c = Math.sqrt(a * a + b * b);
+                
+                // 设置SVG尺寸
+                const svgWidth = 300;
+                const svgHeight = 300;
+                
+                // 创建SVG元素
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+                svg.setAttribute('class', 'w-full h-full');
+                
+                // 三角形和正方形的比例因子
+                const scale = Math.min(svgWidth / (a + b + 20), svgHeight / (a + b + 20));
+                
+                // 三角形的顶点坐标
+                const x1 = svgWidth / 2 - a * scale / 2;
+                const y1 = svgHeight / 2 + b * scale / 2;
+                const x2 = x1 + a * scale;
+                const y2 = y1;
+                const x3 = x2;
+                const y3 = y1 - b * scale;
+                
+                // 创建三角形
+                const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                triangle.setAttribute('points', `${x1},${y1} ${x2},${y2} ${x3},${y3}`);
+                triangle.setAttribute('fill', '#ffffff');
+                triangle.setAttribute('stroke', '#000000');
+                triangle.setAttribute('stroke-width', '2');
+                triangle.setAttribute('class', 'triangle-shadow');
+                
+                // 创建边a的正方形
+                const squareA = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                squareA.setAttribute('x', x1);
+                squareA.setAttribute('y', y1);
+                squareA.setAttribute('width', a * scale);
+                squareA.setAttribute('height', a * scale);
+                squareA.setAttribute('fill', 'rgba(239, 68, 68, 0.7)'); // red-500 with opacity
+                squareA.setAttribute('stroke', '#EF4444');
+                squareA.setAttribute('stroke-width', '2');
+                squareA.setAttribute('id', 'square-a');
+                
+                // 创建边b的正方形
+                const squareB = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                squareB.setAttribute('x', x2);
+                squareB.setAttribute('y', y3);
+                squareB.setAttribute('width', b * scale);
+                squareB.setAttribute('height', b * scale);
+                squareB.setAttribute('fill', 'rgba(59, 130, 246, 0.7)'); // blue-500 with opacity
+                squareB.setAttribute('stroke', '#3B82F6');
+                squareB.setAttribute('stroke-width', '2');
+                squareB.setAttribute('id', 'square-b');
+                
+                // 创建边c的正方形
+                const squareC = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const cAngle = Math.atan2(b, a) * 180 / Math.PI;
+                squareC.setAttribute('x', x1);
+                squareC.setAttribute('y', y1);
+                squareC.setAttribute('width', c * scale);
+                squareC.setAttribute('height', c * scale);
+                squareC.setAttribute('fill', 'rgba(16, 185, 129, 0.7)'); // green-500 with opacity
+                squareC.setAttribute('stroke', '#10B981');
+                squareC.setAttribute('stroke-width', '2');
+                squareC.setAttribute('transform', `rotate(${-cAngle}, ${x1}, ${y1})`);
+                squareC.setAttribute('id', 'square-c');
+                
+                // 添加边标签
+                const labelA = createTextLabel(x1 + a * scale / 2, y1 + a * scale / 1.5, 'a', 'red-500');
+                const labelB = createTextLabel(x2 + b * scale / 3, y3 + b * scale / 2, 'b', 'blue-500');
+                const labelC = createTextLabel(x1 + a * scale / 2 - b * scale / 3, y1 - a * scale / 3, 'c', 'green-500');
+                
+                // 添加所有元素到SVG
+                svg.appendChild(squareA);
+                svg.appendChild(squareB);
+                svg.appendChild(squareC);
+                svg.appendChild(triangle);
+                svg.appendChild(labelA);
+                svg.appendChild(labelB);
+                svg.appendChild(labelC);
+                
+                // 添加SVG到容器
+                triangleContainer.appendChild(svg);
+            }
+            
+            // 创建文本标签
+            function createTextLabel(x, y, text, colorClass) {
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('x', x);
+                textElement.setAttribute('y', y);
+                textElement.setAttribute('text-anchor', 'middle');
+                textElement.setAttribute('fill', getColorFromClass(colorClass));
+                textElement.setAttribute('font-size', '16');
+                textElement.setAttribute('font-weight', 'bold');
+                textElement.textContent = text;
+                return textElement;
+            }
+            
+            // 从Tailwind颜色类获取颜色值
+            function getColorFromClass(className) {
+                const colors = {
+                    'red-500': '#EF4444',
+                    'blue-500': '#3B82F6',
+                    'green-500': '#10B981',
+                    'purple-500': '#8B5CF6'
+                };
+                return colors[className] || '#000000';
+            }
+            
+            // 更新计算值
+            function updateCalculations() {
+                const aSq = a * a;
+                const bSq = b * b;
+                const cSq = aSq + bSq;
+                c = Math.sqrt(cSq);
+                
+                calcA.textContent = a;
+                calcB.textContent = b;
+                calcC.textContent = c.toFixed(2);
+                aSquared.textContent = aSq;
+                bSquared.textContent = bSq;
+                cSquared.textContent = cSq;
+                verification.textContent = `${aSq} + ${bSq} = ${cSq}`;
+            }
+            
+            // 动画效果
+            function animateSquares() {
+                // 获取正方形元素
+                const squareA = document.getElementById('square-a');
+                const squareB = document.getElementById('square-b');
+                const squareC = document.getElementById('square-c');
+                
+                // 重置任何现有的动画
+                squareA.style.animation = 'none';
+                squareB.style.animation = 'none';
+                squareC.style.animation = 'none';
+                
+                // 强制重绘
+                void squareA.offsetWidth;
+                void squareB.offsetWidth;
+                void squareC.offsetWidth;
+                
+                // 添加动画
+                squareA.style.animation = 'pulse 1s ease-in-out 0s 2';
+                squareB.style.animation = 'pulse 1s ease-in-out 0.5s 2';
+                squareC.style.animation = 'pulse 1s ease-in-out 1s 2';
+                
+                // 添加CSS动画
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes pulse {
+                        0% { transform: scale(1); opacity: 0.7; }
+                        50% { transform: scale(1.05); opacity: 0.9; }
+                        100% { transform: scale(1); opacity: 0.7; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        });
+    </script>
+</body>
+</html>
