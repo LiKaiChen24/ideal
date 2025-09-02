@@ -1,0 +1,1367 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勾股定理互动演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
+                        // 增强的颜色集
+                        red: {
+                            light: '#FEE2E2',
+                            DEFAULT: '#EF4444',
+                            dark: '#B91C1C'
+                        },
+                        blue: {
+                            light: '#DBEAFE',
+                            DEFAULT: '#3B82F6',
+                            dark: '#1D4ED8'
+                        },
+                        green: {
+                            light: '#D1FAE5',
+                            DEFAULT: '#10B981',
+                            dark: '#059669'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .triangle-shadow {
+                filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            }
+            .text-stroke {
+                -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.3);
+            }
+            .math-animation {
+                transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .clickable-area {
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .clickable-area:hover {
+                filter: brightness(1.1);
+            }
+            .fade-in {
+                animation: fadeIn 0.8s ease forwards;
+            }
+            .slide-in {
+                animation: slideIn 0.6s ease forwards;
+            }
+            .pulse {
+                animation: pulse 2s infinite;
+            }
+            .highlight {
+                animation: highlight 1.5s ease infinite alternate;
+            }
+            .text-pulse {
+                animation: textPulse 1.5s ease infinite alternate;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            @keyframes highlight {
+                from { filter: brightness(1); }
+                to { filter: brightness(1.2); }
+            }
+            @keyframes textPulse {
+                from { opacity: 0.8; }
+                to { opacity: 1; }
+            }
+            @keyframes fill {
+                from { fill-opacity: 0; }
+                to { fill-opacity: 0.7; }
+            }
+            @keyframes draw {
+                from { stroke-dashoffset: 1000; }
+                to { stroke-dashoffset: 0; }
+            }
+            .drawing {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+                animation: draw 2s ease forwards;
+            }
+            .filling {
+                animation: fill 1.5s ease forwards 0.5s;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-light to-blue-50 min-h-screen font-sans text-dark">
+    <header class="container mx-auto px-4 py-8">
+        <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-center text-primary mb-2 fade-in">勾股定理互动演示</h1>
+        <p class="text-[clamp(1rem,2vw,1.25rem)] text-center text-gray-600 max-w-3xl mx-auto slide-in" style="animation-delay: 0.2s">
+            探索直角三角形三条边的关系，通过动态可视化理解数学原理
+        </p>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <!-- 演示区域 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl slide-in" style="animation-delay: 0.4s">
+                <h2 class="text-2xl font-bold text-dark mb-4">直观演示</h2>
+                
+                <!-- 动画控制和信息区 -->
+                <div class="bg-blue-50 p-3 rounded-lg mb-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-700">
+                        <span id="animation-status">就绪</span>
+                        <span id="animation-progress" class="ml-2 text-primary hidden">
+                            <i class="fa fa-spinner fa-spin"></i> 演示中...
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        提示：点击图形可查看详细信息
+                    </div>
+                </div>
+                
+                <div class="relative w-full h-[300px] md:h-[400px] mb-6 bg-gray-50 rounded-lg overflow-hidden">
+                    <div id="triangle-container" class="absolute inset-0 flex items-center justify-center">
+                        <!-- 勾股定理可视化将通过JS动态生成 -->
+                    </div>
+                    <div id="animation-overlay" class="absolute inset-0 bg-black/5 hidden items-center justify-center">
+                        <div class="text-center text-white p-4">
+                            <p id="overlay-text" class="text-lg font-medium text-stroke">蓝色正方形面积 = b²</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-red-500"></div>
+                        <span>边 a (红色)</span>
+                        <span class="ml-auto text-sm text-gray-500" id="a-length-display">3 单位</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+                        <span>边 b (蓝色)</span>
+                        <span class="ml-auto text-sm text-gray-500" id="b-length-display">4 单位</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                        <span>斜边 c (绿色)</span>
+                        <span class="ml-auto text-sm text-gray-500" id="c-length-display">5 单位</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-4">
+                    <div>
+                        <label for="side-a" class="block text-sm font-medium text-gray-700 mb-1">调整边 a 的长度</label>
+                        <input type="range" id="side-a" min="3" max="15" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>3</span>
+                            <span id="a-value" class="font-medium text-red-600">3</span>
+                            <span>15</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="side-b" class="block text-sm font-medium text-gray-700 mb-1">调整边 b 的长度</label>
+                        <input type="range" id="side-b" min="3" max="15" value="4" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>3</span>
+                            <span id="b-value" class="font-medium text-blue-600">4</span>
+                            <span>15</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <button id="animate-btn" class="px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-primary/90 transition-all duration-200 flex items-center justify-center group">
+                            <i class="fa fa-play mr-2 group-hover:scale-110 transition-transform"></i> 开始面积演示
+                        </button>
+                        <button id="reset-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg shadow hover:bg-gray-300 transition-all duration-200 flex items-center justify-center group">
+                            <i class="fa fa-refresh mr-2 group-hover:rotate-180 transition-transform duration-500"></i> 重置
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <button class="preset-btn px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-all" data-a="3" data-b="4">3-4-5</button>
+                        <button class="preset-btn px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-all" data-a="5" data-b="12">5-12-13</button>
+                        <button class="preset-btn px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-all" data-a="6" data-b="8">6-8-10</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 知识讲解区域 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl slide-in" style="animation-delay: 0.6s">
+                <h2 class="text-2xl font-bold text-dark mb-4">勾股定理详解</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">什么是勾股定理？</h3>
+                        <p class="text-gray-700 leading-relaxed">
+                            勾股定理（又称毕达哥拉斯定理）是一个基本的几何定理，指的是在一个直角三角形中，斜边的平方等于另外两条直角边的平方和。
+                        </p>
+                        <div class="mt-3 bg-gray-50 p-4 rounded-lg transform transition-transform hover:scale-[1.02]">
+                            <p class="text-center text-xl font-bold text-dark">
+                                <span class="text-red-600">a²</span> + <span class="text-blue-600">b²</span> = <span class="text-green-600">c²</span>
+                            </p>
+                            <p class="text-center text-gray-600 mt-1">其中，a和b是直角边，c是斜边</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">面积关系演示</h3>
+                        <div id="animation-info" class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+                            点击"开始面积演示"按钮，观看动画展示如何将直角边上的两个正方形面积组合起来，恰好等于斜边上正方形的面积。
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-primary mb-2">当前计算</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-red-50 p-3 rounded-lg border border-red-100 transform transition-all hover:-translate-y-1 hover:shadow-md">
+                                <p class="text-sm text-gray-600">边 a 长度</p>
+                                <p class="text-xl font-bold text-red-600" id="calc-a">3</p>
+                                <p class="text-xs text-gray-500">面积 = <span id="a-squared" class="font-medium text-red-600">9</span></p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 transform transition-all hover:-translate-y-1 hover:shadow-md">
+                                <p class="text-sm text-gray-600">边 b 长度</p>
+                                <p class="text-xl font-bold text-blue-600" id="calc-b">4</p>
+                                <p class="text-xs text-gray-500">面积 = <span id="b-squared" class="font-medium text-blue-600">16</span></p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg border border-green-100 transform transition-all hover:-translate-y-1 hover:shadow-md">
+                                <p class="text-sm text-gray-600">斜边 c 长度</p>
+                                <p class="text-xl font-bold text-green-600" id="calc-c">5</p>
+                                <p class="text-xs text-gray-500">面积 = <span id="c-squared" class="font-medium text-green-600">25</span></p>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg border border-purple-100 transform transition-all hover:-translate-y-1 hover:shadow-md">
+                                <p class="text-sm text-gray-600">验证</p>
+                                <p class="text-xl font-bold" id="verification">
+                                    <span class="text-red-600">9</span> + <span class="text-blue-600">16</span> = <span class="text-green-600">25</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 互动示例区域 -->
+        <div class="mt-10 bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl slide-in" style="animation-delay: 0.8s">
+            <h2 class="text-2xl font-bold text-dark mb-6">互动练习</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 transform transition-all hover:shadow-md">
+                    <h3 class="font-semibold text-primary mb-3">找出未知边的长度</h3>
+                    <p class="text-gray-700 mb-4">已知一个直角三角形的两条边，你能算出第三条边的长度吗？</p>
+                    
+                    <div id="quiz-container" class="space-y-4">
+                        <div class="bg-white p-3 rounded border border-gray-300">
+                            <p class="text-sm"><span class="font-medium">问题：</span>一个直角三角形，a = 5，b = 12，求斜边c的长度？</p>
+                            <div class="grid grid-cols-3 gap-2 mt-3">
+                                <button class="quiz-answer px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-all" data-correct="false">15</button>
+                                <button class="quiz-answer px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-all" data-correct="true">13</button>
+                                <button class="quiz-answer px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-all" data-correct="false">17</button>
+                            </div>
+                            <div id="quiz-feedback" class="mt-2 text-sm hidden"></div>
+                        </div>
+                        
+                        <button id="next-question" class="px-3 py-1 text-sm bg-primary/10 text-primary rounded hover:bg-primary/20 transition-all group">
+                            下一个问题 <i class="fa fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 transform transition-all hover:shadow-md">
+                    <h3 class="font-semibold text-primary mb-3">常见勾股数</h3>
+                    <p class="text-gray-700 mb-4">点击以下勾股数组合，在左侧演示区查看对应的三角形</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="3" data-b="4">3-4-5</button>
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="5" data-b="12">5-12-13</button>
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="6" data-b="8">6-8-10</button>
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="7" data-b="24">7-24-25</button>
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="8" data-b="15">8-15-17</button>
+                        <button class="preset-btn p-2 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-all transform hover:-translate-y-1" data-a="9" data-b="40">9-40-41</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="container mx-auto px-4 py-8 mt-10 text-center text-gray-500 text-sm fade-in" style="animation-delay: 1s">
+        <p>© 2025 勾股定理互动演示 | 一个帮助理解数学原理的教育工具</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const triangleContainer = document.getElementById('triangle-container');
+            const sideAInput = document.getElementById('side-a');
+            const sideBInput = document.getElementById('side-b');
+            const aValueDisplay = document.getElementById('a-value');
+            const bValueDisplay = document.getElementById('b-value');
+            const aLengthDisplay = document.getElementById('a-length-display');
+            const bLengthDisplay = document.getElementById('b-length-display');
+            const cLengthDisplay = document.getElementById('c-length-display');
+            const calcA = document.getElementById('calc-a');
+            const calcB = document.getElementById('calc-b');
+            const calcC = document.getElementById('calc-c');
+            const aSquared = document.getElementById('a-squared');
+            const bSquared = document.getElementById('b-squared');
+            const cSquared = document.getElementById('c-squared');
+            const verification = document.getElementById('verification');
+            const animateBtn = document.getElementById('animate-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const animationStatus = document.getElementById('animation-status');
+            const animationProgress = document.getElementById('animation-progress');
+            const animationInfo = document.getElementById('animation-info');
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            const quizAnswers = document.querySelectorAll('.quiz-answer');
+            const quizFeedback = document.getElementById('quiz-feedback');
+            const nextQuestionBtn = document.getElementById('next-question');
+            const animationOverlay = document.getElementById('animation-overlay');
+            const overlayText = document.getElementById('overlay-text');
+            
+            // 问题库
+            const quizQuestions = [
+                { question: "一个直角三角形，a = 5，b = 12，求斜边c的长度？", answers: [15, 13, 17], correct: 1 },
+                { question: "一个直角三角形，a = 6，b = 8，求斜边c的长度？", answers: [10, 14, 9], correct: 0 },
+                { question: "一个直角三角形，a = 9，c = 15，求另一条直角边b的长度？", answers: [10, 12, 14], correct: 1 },
+                { question: "一个直角三角形，b = 24，c = 25，求直角边a的长度？", answers: [7, 9, 11], correct: 0 },
+                { question: "一个直角三角形，a = 8，b = 15，求斜边c的长度？", answers: [16, 18, 17], correct: 2 }
+            ];
+            let currentQuestionIndex = 0;
+            
+            // 设置初始值
+            let a = parseInt(sideAInput.value);
+            let b = parseInt(sideBInput.value);
+            let c = Math.sqrt(a * a + b * b);
+            let isAnimating = false;
+            
+            // 初始绘制 - 添加绘制动画
+            setTimeout(() => {
+                drawTriangleAndSquares(a, b, true);
+                updateCalculations();
+            }, 500);
+            
+            // 监听滑块变化
+            sideAInput.addEventListener('input', debounce(function() {
+                if (isAnimating) return;
+                
+                a = parseInt(this.value);
+                aValueDisplay.textContent = a;
+                drawTriangleAndSquares(a, b);
+                updateCalculations();
+                
+                // 添加数值变化动画
+                animateValueChange(calcA, a, 'red-600');
+                animateValueChange(aSquared, a*a, 'red-600');
+                animateValueChange(calcC, c.toFixed(2), 'green-600');
+                animateValueChange(cSquared, a*a + b*b, 'green-600');
+                updateVerificationText();
+            }, 50));
+            
+            sideBInput.addEventListener('input', debounce(function() {
+                if (isAnimating) return;
+                
+                b = parseInt(this.value);
+                bValueDisplay.textContent = b;
+                drawTriangleAndSquares(a, b);
+                updateCalculations();
+                
+                // 添加数值变化动画
+                animateValueChange(calcB, b, 'blue-600');
+                animateValueChange(bSquared, b*b, 'blue-600');
+                animateValueChange(calcC, c.toFixed(2), 'green-600');
+                animateValueChange(cSquared, a*a + b*b, 'green-600');
+                updateVerificationText();
+            }, 50));
+            
+            // 动画按钮点击事件
+            animateBtn.addEventListener('click', function() {
+                if (isAnimating) return;
+                
+                animateSquares();
+                this.innerHTML = '<i class="fa fa-refresh mr-2 group-hover:rotate-180 transition-transform duration-500"></i> 重新演示';
+            });
+            
+            // 重置按钮点击事件
+            resetBtn.addEventListener('click', function() {
+                if (isAnimating) return;
+                
+                // 添加重置动画
+                const elements = [
+                    document.getElementById('square-a'),
+                    document.getElementById('square-b'),
+                    document.getElementById('square-c'),
+                    ...document.querySelectorAll('#triangle-container polygon')
+                ];
+                
+                elements.forEach(el => {
+                    if (el) {
+                        el.style.transition = 'all 0.3s ease';
+                        el.style.opacity = '0';
+                        el.style.transform = 'scale(0.8)';
+                    }
+                });
+                
+                setTimeout(() => {
+                    sideAInput.value = 3;
+                    sideBInput.value = 4;
+                    a = 3;
+                    b = 4;
+                    aValueDisplay.textContent = a;
+                    bValueDisplay.textContent = b;
+                    drawTriangleAndSquares(a, b, true);
+                    updateCalculations();
+                    animateBtn.innerHTML = '<i class="fa fa-play mr-2 group-hover:scale-110 transition-transform"></i> 开始面积演示';
+                }, 300);
+            });
+            
+            // 预设按钮点击事件
+            presetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (isAnimating) return;
+                    
+                    const presetA = parseInt(this.getAttribute('data-a'));
+                    const presetB = parseInt(this.getAttribute('data-b'));
+                    
+                    // 添加按钮点击动画
+                    this.classList.add('scale-90');
+                    setTimeout(() => this.classList.remove('scale-90'), 150);
+                    
+                    a = presetA;
+                    b = presetB;
+                    
+                    sideAInput.value = a;
+                    sideBInput.value = b;
+                    
+                    aValueDisplay.textContent = a;
+                    bValueDisplay.textContent = b;
+                    
+                    drawTriangleAndSquares(a, b, true);
+                    updateCalculations();
+                    animateBtn.innerHTML = '<i class="fa fa-play mr-2 group-hover:scale-110 transition-transform"></i> 开始面积演示';
+                });
+            });
+            
+            // 测验答案点击事件
+            quizAnswers.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除其他答案的样式
+                    quizAnswers.forEach(btn => {
+                        btn.classList.remove('bg-green-100', 'border-green-500', 'bg-red-100', 'border-red-500', 'scale-110', 'text-green-700', 'text-red-700');
+                    });
+                    
+                    // 添加当前答案的样式和动画
+                    this.classList.add('scale-110', 'transition-transform');
+                    
+                    if (this.getAttribute('data-correct') === 'true') {
+                        this.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                        quizFeedback.textContent = '正确！做得好！';
+                        quizFeedback.classList.remove('text-red-500', 'hidden');
+                        quizFeedback.classList.add('text-green-500');
+                    } else {
+                        this.classList.add('bg-red-100', 'border-red-500', 'text-red-700');
+                        // 显示正确答案
+                        quizAnswers.forEach(btn => {
+                            if (btn.getAttribute('data-correct') === 'true') {
+                                btn.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                            }
+                        });
+                        quizFeedback.textContent = '不正确，请再试一次。';
+                        quizFeedback.classList.remove('text-green-500', 'hidden');
+                        quizFeedback.classList.add('text-red-500');
+                    }
+                    
+                    quizFeedback.classList.remove('hidden');
+                    quizFeedback.classList.add('fade-in');
+                });
+            });
+            
+            // 下一个问题按钮点击事件
+            nextQuestionBtn.addEventListener('click', function() {
+                // 添加按钮动画
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 150);
+                
+                currentQuestionIndex = (currentQuestionIndex + 1) % quizQuestions.length;
+                loadQuestion(currentQuestionIndex);
+            });
+            
+            // 加载问题
+            function loadQuestion(index) {
+                const question = quizQuestions[index];
+                document.querySelector('#quiz-container p').innerHTML = 
+                    `<span class="font-medium">问题：</span>${question.question}`;
+                
+                // 重置答案按钮
+                quizAnswers.forEach((btn, i) => {
+                    btn.textContent = question.answers[i];
+                    btn.setAttribute('data-correct', i === question.correct);
+                    btn.classList.remove('bg-green-100', 'border-green-500', 'bg-red-100', 'border-red-500', 'scale-110', 'text-green-700', 'text-red-700');
+                });
+                
+                quizFeedback.classList.add('hidden');
+            }
+            
+            // 绘制三角形和正方形
+            function drawTriangleAndSquares(a, b, initialDraw = false) {
+                // 清除现有内容
+                triangleContainer.innerHTML = '';
+                
+                // 计算斜边
+                c = Math.sqrt(a * a + b * b);
+                
+                // 设置SVG尺寸
+                const svgWidth = 300;
+                const svgHeight = 300;
+                
+                // 创建SVG元素
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+                svg.setAttribute('class', 'w-full h-full');
+                
+                // 三角形和正方形的比例因子
+                const scale = Math.min(svgWidth / (a + b + 20), svgHeight / (a + b + 20));
+                
+                // 三角形的顶点坐标
+                const x1 = svgWidth / 2 - a * scale / 2;
+                const y1 = svgHeight / 2 + b * scale / 2;
+                const x2 = x1 + a * scale;
+                const y2 = y1;
+                const x3 = x2;
+                const y3 = y1 - b * scale;
+                
+                // 创建三角形
+                const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                triangle.setAttribute('points', `${x1},${y1} ${x2},${y2} ${x3},${y3}`);
+                triangle.setAttribute('fill', '#ffffff');
+                triangle.setAttribute('stroke', '#000000');
+                triangle.setAttribute('stroke-width', '2');
+                triangle.setAttribute('stroke-dasharray', '1000');
+                triangle.setAttribute('class', 'triangle-shadow clickable-area');
+                triangle.setAttribute('data-info', `直角三角形: 边a = ${a}, 边b = ${b}, 斜边c = ${c.toFixed(2)}`);
+                
+                if (initialDraw) {
+                    triangle.classList.add('drawing');
+                }
+                
+                // 创建边a的正方形
+                const squareA = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                squareA.setAttribute('x', x1);
+                squareA.setAttribute('y', y1);
+                squareA.setAttribute('width', a * scale);
+                squareA.setAttribute('height', a * scale);
+                squareA.setAttribute('fill', 'rgba(239, 68, 68, 0.7)'); // red-500 with opacity
+                squareA.setAttribute('stroke', '#EF4444');
+                squareA.setAttribute('stroke-width', '2');
+                squareA.setAttribute('stroke-dasharray', '1000');
+                squareA.setAttribute('id', 'square-a');
+                squareA.setAttribute('class', 'math-animation clickable-area');
+                squareA.setAttribute('data-info', `边长为${a}的正方形，面积 = ${a*a}`);
+                
+                if (initialDraw) {
+                    squareA.classList.add('drawing', 'filling');
+                    squareA.style.fillOpacity = 0;
+                }
+                
+                // 创建边a正方形的网格线
+                createSquareGrid(svg, x1, y1, a, scale, '#EF4444', initialDraw);
+                
+                // 创建边b的正方形
+                const squareB = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                squareB.setAttribute('x', x2);
+                squareB.setAttribute('y', y3);
+                squareB.setAttribute('width', b * scale);
+                squareB.setAttribute('height', b * scale);
+                squareB.setAttribute('fill', 'rgba(59, 130, 246, 0.7)'); // blue-500 with opacity
+                squareB.setAttribute('stroke', '#3B82F6');
+                squareB.setAttribute('stroke-width', '2');
+                squareB.setAttribute('stroke-dasharray', '1000');
+                squareB.setAttribute('id', 'square-b');
+                squareB.setAttribute('class', 'math-animation clickable-area');
+                squareB.setAttribute('data-info', `边长为${b}的正方形，面积 = ${b*b}`);
+                
+                if (initialDraw) {
+                    squareB.classList.add('drawing', 'filling');
+                    squareB.style.fillOpacity = 0;
+                    squareB.style.animationDelay = '0.3s';
+                }
+                
+                // 创建边b正方形的网格线
+                createSquareGrid(svg, x2, y3, b, scale, '#3B82F6', initialDraw);
+                
+                // 创建边c的正方形
+                const squareC = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                const cAngle = Math.atan2(b, a) * 180 / Math.PI;
+                squareC.setAttribute('x', x1);
+                squareC.setAttribute('y', y1);
+                squareC.setAttribute('width', c * scale);
+                squareC.setAttribute('height', c * scale);
+                squareC.setAttribute('fill', 'rgba(16, 185, 129, 0.7)'); // green-500 with opacity
+                squareC.setAttribute('stroke', '#10B981');
+                squareC.setAttribute('stroke-width', '2');
+                squareC.setAttribute('stroke-dasharray', '1000');
+                squareC.setAttribute('transform', `rotate(${-cAngle}, ${x1}, ${y1})`);
+                squareC.setAttribute('id', 'square-c');
+                squareC.setAttribute('class', 'math-animation clickable-area');
+                squareC.setAttribute('data-info', `边长为${c.toFixed(2)}的正方形，面积 = ${(a*a + b*b).toFixed(0)}`);
+                
+                if (initialDraw) {
+                    squareC.classList.add('drawing', 'filling');
+                    squareC.style.fillOpacity = 0;
+                    squareC.style.animationDelay = '0.6s';
+                }
+                
+                // 创建边c正方形的网格线
+                createSquareGrid(svg, x1, y1, c, scale, '#10B981', initialDraw, -cAngle);
+                
+                // 添加边标签
+                const labelA = createTextLabel(x1 + a * scale / 2, y1 + a * scale / 1.5, 'a', 'red-600', initialDraw ? 0.9 : 0);
+                const labelB = createTextLabel(x2 + b * scale / 3, y3 + b * scale / 2, 'b', 'blue-600', initialDraw ? 1.2 : 0);
+                const labelC = createTextLabel(x1 + a * scale / 2 - b * scale / 3, y1 - a * scale / 3, 'c', 'green-600', initialDraw ? 1.5 : 0);
+                
+                // 添加面积标签
+                const areaA = createAreaLabel(x1 + a * scale / 2, y1 + a * scale / 2, `${a}² = ${a*a}`, 'red-600', 0, initialDraw ? 0.9 : 0);
+                const areaB = createAreaLabel(x2 + b * scale / 2, y3 + b * scale / 2, `${b}² = ${b*b}`, 'blue-600', 0, initialDraw ? 1.2 : 0);
+                const areaC = createAreaLabel(x1 + c * scale / 2, y1 + c * scale / 2, `${c.toFixed(2)}² = ${(a*a + b*b).toFixed(0)}`, 'green-600', -cAngle, initialDraw ? 1.5 : 0);
+                
+                // 添加所有元素到SVG
+                svg.appendChild(squareA);
+                svg.appendChild(squareB);
+                svg.appendChild(squareC);
+                svg.appendChild(triangle);
+                svg.appendChild(labelA);
+                svg.appendChild(labelB);
+                svg.appendChild(labelC);
+                svg.appendChild(areaA);
+                svg.appendChild(areaB);
+                svg.appendChild(areaC);
+                
+                // 添加SVG到容器
+                triangleContainer.appendChild(svg);
+                
+                // 添加点击事件
+                [squareA, squareB, squareC, triangle].forEach(element => {
+                    element.addEventListener('click', function() {
+                        if (!isAnimating) {
+                            showInfoPopup(this.getAttribute('data-info'));
+                        }
+                    });
+                    
+                    element.addEventListener('mouseenter', function() {
+                        if (!isAnimating) {
+                            this.style.strokeWidth = '3';
+                            this.style.filter = 'brightness(1.1)';
+                            
+                            // 鼠标悬停时改变相关文字颜色
+                            if (this.id === 'square-a') {
+                                labelA.setAttribute('fill', getColorFromClass('red-dark'));
+                                areaA.setAttribute('fill', getColorFromClass('red-dark'));
+                                calcA.classList.add('text-red-dark');
+                                aSquared.classList.add('text-red-dark');
+                            } else if (this.id === 'square-b') {
+                                labelB.setAttribute('fill', getColorFromClass('blue-dark'));
+                                areaB.setAttribute('fill', getColorFromClass('blue-dark'));
+                                calcB.classList.add('text-blue-dark');
+                                bSquared.classList.add('text-blue-dark');
+                            } else if (this.id === 'square-c') {
+                                labelC.setAttribute('fill', getColorFromClass('green-dark'));
+                                areaC.setAttribute('fill', getColorFromClass('green-dark'));
+                                calcC.classList.add('text-green-dark');
+                                cSquared.classList.add('text-green-dark');
+                            }
+                        }
+                    });
+                    
+                    element.addEventListener('mouseleave', function() {
+                        if (!isAnimating) {
+                            this.style.strokeWidth = '2';
+                            this.style.filter = 'brightness(1)';
+                            
+                            // 鼠标离开时恢复文字颜色
+                            if (this.id === 'square-a') {
+                                labelA.setAttribute('fill', getColorFromClass('red-600'));
+                                areaA.setAttribute('fill', getColorFromClass('red-600'));
+                                calcA.classList.remove('text-red-dark');
+                                aSquared.classList.remove('text-red-dark');
+                            } else if (this.id === 'square-b') {
+                                labelB.setAttribute('fill', getColorFromClass('blue-600'));
+                                areaB.setAttribute('fill', getColorFromClass('blue-600'));
+                                calcB.classList.remove('text-blue-dark');
+                                bSquared.classList.remove('text-blue-dark');
+                            } else if (this.id === 'square-c') {
+                                labelC.setAttribute('fill', getColorFromClass('green-600'));
+                                areaC.setAttribute('fill', getColorFromClass('green-600'));
+                                calcC.classList.remove('text-green-dark');
+                                cSquared.classList.remove('text-green-dark');
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 创建正方形网格线
+            function createSquareGrid(svg, x, y, size, scale, color, initialDraw = false, rotation = 0) {
+                const cellSize = scale;
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                
+                if (rotation !== 0) {
+                    group.setAttribute('transform', `rotate(${rotation}, ${x}, ${y})`);
+                }
+                
+                if (initialDraw) {
+                    group.style.opacity = 0;
+                    setTimeout(() => {
+                        group.style.transition = 'opacity 1s ease';
+                        group.style.opacity = 1;
+                    }, 1000);
+                }
+                
+                // 水平线
+                for (let i = 1; i < size; i++) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', y + i * cellSize);
+                    line.setAttribute('x2', x + size * scale);
+                    line.setAttribute('y2', y + i * cellSize);
+                    line.setAttribute('stroke', color);
+                    line.setAttribute('stroke-width', '0.5');
+                    line.setAttribute('stroke-opacity', '0.3');
+                    
+                    if (initialDraw) {
+                        line.style.transition = 'all 0.5s ease';
+                        line.style.transitionDelay = `${0.5 + i * 0.1}s`;
+                        line.setAttribute('x2', x);
+                        
+                        setTimeout(() => {
+                            line.setAttribute('x2', x + size * scale);
+                        }, 10);
+                    }
+                    
+                    group.appendChild(line);
+                }
+                
+                // 垂直线
+                for (let i = 1; i < size; i++) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x + i * cellSize);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', x + i * cellSize);
+                    line.setAttribute('y2', y + size * scale);
+                    line.setAttribute('stroke', color);
+                    line.setAttribute('stroke-width', '0.5');
+                    line.setAttribute('stroke-opacity', '0.3');
+                    
+                    if (initialDraw) {
+                        line.style.transition = 'all 0.5s ease';
+                        line.style.transitionDelay = `${0.7 + i * 0.1}s`;
+                        line.setAttribute('y2', y);
+                        
+                        setTimeout(() => {
+                            line.setAttribute('y2', y + size * scale);
+                        }, 10);
+                    }
+                    
+                    group.appendChild(line);
+                }
+                
+                svg.appendChild(group);
+            }
+            
+            // 创建文本标签
+            function createTextLabel(x, y, text, colorClass, delay = 0) {
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('x', x);
+                textElement.setAttribute('y', y);
+                textElement.setAttribute('text-anchor', 'middle');
+                textElement.setAttribute('fill', getColorFromClass(colorClass));
+                textElement.setAttribute('font-size', '16');
+                textElement.setAttribute('font-weight', 'bold');
+                textElement.setAttribute('class', 'text-stroke');
+                textElement.textContent = text;
+                textElement.style.opacity = 0;
+                
+                if (delay > 0) {
+                    setTimeout(() => {
+                        textElement.style.transition = 'opacity 0.5s ease';
+                        textElement.style.opacity = 1;
+                    }, delay * 1000);
+                } else {
+                    textElement.style.opacity = 1;
+                }
+                
+                return textElement;
+            }
+            
+            // 创建面积标签
+            function createAreaLabel(x, y, text, colorClass, rotation = 0, delay = 0) {
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('x', x);
+                textElement.setAttribute('y', y);
+                textElement.setAttribute('text-anchor', 'middle');
+                textElement.setAttribute('fill', getColorFromClass(colorClass));
+                textElement.setAttribute('font-size', '12');
+                textElement.setAttribute('font-weight', 'normal');
+                textElement.setAttribute('class', 'text-stroke');
+                textElement.textContent = text;
+                textElement.style.opacity = 0;
+                
+                if (rotation !== 0) {
+                    textElement.setAttribute('transform', `rotate(${rotation}, ${x}, ${y})`);
+                }
+                
+                if (delay > 0) {
+                    setTimeout(() => {
+                        textElement.style.transition = 'opacity 0.5s ease';
+                        textElement.style.opacity = 1;
+                    }, delay * 1000);
+                } else {
+                    textElement.style.opacity = 1;
+                }
+                
+                return textElement;
+            }
+            
+            // 从Tailwind颜色类获取颜色值
+            function getColorFromClass(className) {
+                const colors = {
+                    'red-500': '#EF4444',
+                    'red-600': '#DC2626',
+                    'red-dark': '#B91C1C',
+                    'blue-500': '#3B82F6',
+                    'blue-600': '#2563EB',
+                    'blue-dark': '#1D4ED8',
+                    'green-500': '#10B981',
+                    'green-600': '#059669',
+                    'green-dark': '#065F46',
+                    'purple-500': '#8B5CF6'
+                };
+                return colors[className] || '#000000';
+            }
+            
+            // 更新计算值
+            function updateCalculations() {
+                const aSq = a * a;
+                const bSq = b * b;
+                const cSq = aSq + bSq;
+                c = Math.sqrt(cSq);
+                
+                calcA.textContent = a;
+                calcB.textContent = b;
+                calcC.textContent = c.toFixed(2);
+                aSquared.textContent = aSq;
+                bSquared.textContent = bSq;
+                cSquared.textContent = cSq;
+                
+                updateVerificationText();
+                
+                aLengthDisplay.textContent = `${a} 单位`;
+                bLengthDisplay.textContent = `${b} 单位`;
+                cLengthDisplay.textContent = `${c.toFixed(2)} 单位`;
+            }
+            
+            // 更新验证文本
+            function updateVerificationText() {
+                verification.innerHTML = `<span class="text-red-600">${a*a}</span> + <span class="text-blue-600">${b*b}</span> = <span class="text-green-600">${a*a + b*b}</span>`;
+            }
+            
+            // 数值变化动画
+            function animateValueChange(element, newValue, colorClass) {
+                element.classList.add('scale-110', `text-${colorClass.replace('-', '')}`);
+                setTimeout(() => {
+                    element.textContent = newValue;
+                    element.classList.remove('scale-110', `text-${colorClass.replace('-', '')}`);
+                }, 200);
+            }
+            
+            // 动画效果 - 展示面积关系
+            function animateSquares() {
+                isAnimating = true;
+                animationStatus.textContent = "演示中...";
+                animationProgress.classList.remove('hidden');
+                animateBtn.disabled = true;
+                animateBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                sideAInput.disabled = true;
+                sideBInput.disabled = true;
+                presetButtons.forEach(btn => btn.disabled = true);
+                
+                // 获取所有文本元素
+                const allTextElements = document.querySelectorAll('#triangle-container text');
+                const calculationElements = [
+                    calcA, calcB, calcC,
+                    aSquared, bSquared, cSquared,
+                    verification
+                ];
+                
+                // 获取正方形元素
+                const squareA = document.getElementById('square-a');
+                const squareB = document.getElementById('square-b');
+                const squareC = document.getElementById('square-c');
+                
+                // 存储原始属性
+                const originalA = {
+                    x: squareA.getAttribute('x'),
+                    y: squareA.getAttribute('y'),
+                    transform: squareA.getAttribute('transform') || '',
+                    opacity: squareA.style.opacity || 1
+                };
+                
+                const originalB = {
+                    x: squareB.getAttribute('x'),
+                    y: squareB.getAttribute('y'),
+                    transform: squareB.getAttribute('transform') || '',
+                    opacity: squareB.style.opacity || 1
+                };
+                
+                const originalC = {
+                    opacity: squareC.style.opacity || 1
+                };
+                
+                // 计算斜边角度
+                const cAngle = Math.atan2(b, a) * 180 / Math.PI;
+                
+                // 计算动画目标位置
+                const svgWidth = 300;
+                const svgHeight = 300;
+                const scale = Math.min(svgWidth / (a + b + 20), svgHeight / (a + b + 20));
+                const targetX = svgWidth / 2 - (c * scale) / 2;
+                const targetY = svgHeight / 2 - (c * scale) / 2;
+                
+                // 显示步骤提示
+                function showStepMessage(message, duration = 1000, color = 'white') {
+                    return new Promise(resolve => {
+                        overlayText.textContent = message;
+                        overlayText.style.color = color;
+                        animationOverlay.classList.remove('hidden');
+                        animationOverlay.classList.add('flex');
+                        animationOverlay.style.opacity = 0;
+                        
+                        // 淡入动画
+                        setTimeout(() => {
+                            animationOverlay.style.transition = 'opacity 0.5s ease';
+                            animationOverlay.style.opacity = 1;
+                        }, 10);
+                        
+                        // 停留指定时间后淡出
+                        setTimeout(() => {
+                            animationOverlay.style.opacity = 0;
+                            setTimeout(() => {
+                                animationOverlay.classList.remove('flex');
+                                animationOverlay.classList.add('hidden');
+                                resolve();
+                            }, 500);
+                        }, duration);
+                    });
+                }
+                
+                // 动画步骤
+                const animationSteps = [
+                    // 步骤0: 显示介绍信息
+                    function() {
+                        // 改变公式文本颜色
+                        verification.classList.add('highlight');
+                        allTextElements.forEach(el => {
+                            if (el.textContent.includes('²')) {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        return showStepMessage("勾股定理: a² + b² = c²", 1500);
+                    },
+                    
+                    // 步骤1: 强调红色正方形
+                    function() {
+                        // 重置之前的高亮
+                        verification.classList.remove('highlight');
+                        allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                        
+                        // 高亮红色元素
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('red-600')) {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-a' || el.id === 'a-squared') {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            squareA.classList.add('pulse');
+                            setTimeout(() => {
+                                squareA.classList.remove('pulse');
+                                allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                resolve();
+                            }, 1500);
+                        });
+                    },
+                    
+                    // 步骤2: 强调蓝色正方形
+                    function() {
+                        // 高亮蓝色元素
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('blue-600')) {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-b' || el.id === 'b-squared') {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            squareB.classList.add('pulse');
+                            setTimeout(() => {
+                                squareB.classList.remove('pulse');
+                                allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                resolve();
+                            }, 1500);
+                        });
+                    },
+                    
+                    // 步骤3: 强调绿色正方形
+                    function() {
+                        // 高亮绿色元素
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('green-600')) {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-c' || el.id === 'c-squared') {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            squareC.classList.add('pulse');
+                            setTimeout(() => {
+                                squareC.classList.remove('pulse');
+                                allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                resolve();
+                            }, 1500);
+                        });
+                    },
+                    
+                    // 步骤4: 淡化绿色正方形
+                    function() {
+                        // 淡化绿色文本
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('green-600')) {
+                                el.style.transition = 'opacity 0.8s ease';
+                                el.style.opacity = '0.3';
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-c' || el.id === 'c-squared') {
+                                el.style.transition = 'opacity 0.8s ease';
+                                el.style.opacity = '0.3';
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            squareC.style.transition = 'opacity 0.8s ease';
+                            squareC.style.opacity = '0.2';
+                            setTimeout(resolve, 800);
+                        });
+                    },
+                    
+                    // 步骤5: 移动红色正方形到绿色正方形位置
+                    function() {
+                        // 高亮红色文本
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('red-600')) {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-a' || el.id === 'a-squared') {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            showStepMessage("红色正方形面积 = a²", 1000, getColorFromClass('red-600')).then(() => {
+                                squareA.style.transition = 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                                squareA.setAttribute('x', targetX);
+                                squareA.setAttribute('y', targetY);
+                                squareA.setAttribute('transform', `rotate(${-cAngle}, ${targetX}, ${targetY})`);
+                                
+                                setTimeout(() => {
+                                    allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                    calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                    resolve();
+                                }, 1200);
+                            });
+                        });
+                    },
+                    
+                    // 步骤6: 移动蓝色正方形到绿色正方形上方
+                    function() {
+                        // 高亮蓝色文本
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('blue-600')) {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-b' || el.id === 'b-squared') {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            showStepMessage("蓝色正方形面积 = b²", 1000, getColorFromClass('blue-600')).then(() => {
+                                squareB.style.transition = 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                                squareB.setAttribute('x', targetX);
+                                squareB.setAttribute('y', targetY);
+                                squareB.setAttribute('transform', `rotate(${-cAngle}, ${targetX}, ${targetY})`);
+                                
+                                setTimeout(() => {
+                                    allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                    calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                    resolve();
+                                }, 1200);
+                            });
+                        });
+                    },
+                    
+                    // 步骤7: 显示组合信息
+                    function() {
+                        // 高亮红色和蓝色文本
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('red-600') || 
+                                el.getAttribute('fill') === getColorFromClass('blue-600')) {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-a' || el.id === 'a-squared' ||
+                                el.id === 'calc-b' || el.id === 'b-squared') {
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            showStepMessage(`a² + b² = ${a*a + b*b}`, 1500).then(() => {
+                                allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                resolve();
+                            });
+                        });
+                    },
+                    
+                    // 步骤8: 显示绿色正方形
+                    function() {
+                        // 恢复并高亮绿色文本
+                        allTextElements.forEach(el => {
+                            if (el.getAttribute('fill') === getColorFromClass('green-600')) {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        calculationElements.forEach(el => {
+                            if (el.id === 'calc-c' || el.id === 'c-squared') {
+                                el.style.transition = 'all 0.8s ease';
+                                el.style.opacity = '1';
+                                el.classList.add('text-pulse');
+                            }
+                        });
+                        
+                        return new Promise(resolve => {
+                            showStepMessage("c² = a² + b²", 1000, getColorFromClass('green-600')).then(() => {
+                                squareC.style.transition = 'opacity 0.8s ease';
+                                squareC.style.opacity = originalC.opacity;
+                                
+                                setTimeout(() => {
+                                    allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                    calculationElements.forEach(el => el.classList.remove('text-pulse'));
+                                    resolve();
+                                }, 800);
+                            });
+                        });
+                    },
+                    
+                    // 步骤9: 恢复红色和蓝色正方形位置
+                    function() {
+                        // 高亮所有文本
+                        allTextElements.forEach(el => {
+                            el.classList.add('text-pulse');
+                        });
+                        verification.classList.add('highlight');
+                        
+                        return new Promise(resolve => {
+                            squareA.style.transition = 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                            squareB.style.transition = 'all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                            
+                            squareA.setAttribute('x', originalA.x);
+                            squareA.setAttribute('y', originalA.y);
+                            squareA.setAttribute('transform', originalA.transform);
+                            
+                            squareB.setAttribute('x', originalB.x);
+                            squareB.setAttribute('y', originalB.y);
+                            squareB.setAttribute('transform', originalB.transform);
+                            
+                            setTimeout(() => {
+                                allTextElements.forEach(el => el.classList.remove('text-pulse'));
+                                verification.classList.remove('highlight');
+                                resolve();
+                            }, 1200);
+                        });
+                    },
+                    
+                    // 步骤10: 最终信息
+                    function() {
+                        return showStepMessage("from LiKaiChen24", 2000);
+                    }
+                ];
+                
+                // 执行动画步骤
+                animationSteps.reduce((promise, step) => {
+                    return promise.then(step);
+                }, Promise.resolve())
+                .then(() => {
+                    // 动画完成
+                    isAnimating = false;
+                    animationStatus.textContent = "演示完成";
+                    animationProgress.classList.add('hidden');
+                    animateBtn.disabled = false;
+                    animateBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                    sideAInput.disabled = false;
+                    sideBInput.disabled = false;
+                    presetButtons.forEach(btn => btn.disabled = false);
+                    
+                    // 恢复所有文本样式
+                    allTextElements.forEach(el => {
+                        el.style.opacity = '1';
+                        el.classList.remove('text-pulse');
+                    });
+                    calculationElements.forEach(el => {
+                        el.style.opacity = '1';
+                        el.classList.remove('text-pulse');
+                    });
+                    verification.classList.remove('highlight');
+                    
+                    // 更新信息区
+                    animationInfo.innerHTML = "动画演示了a² + b² = c²的几何意义：两个小正方形的面积之和等于大正方形的面积";
+                });
+            }
+            
+            // 显示信息弹窗
+            function showInfoPopup(message) {
+                // 检查是否已有弹窗
+                let popup = document.getElementById('info-popup');
+                if (popup) {
+                    popup.remove();
+                }
+                
+                // 创建新弹窗
+                popup = document.createElement('div');
+                popup.id = 'info-popup';
+                popup.className = 'fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg border border-gray-200 z-50 max-w-xs scale-95 opacity-0';
+                
+                // 为弹窗文本添加颜色
+                let coloredMessage = message;
+                if (message.includes('边a')) {
+                    coloredMessage = message.replace(/a/g, '<span class="text-red-600">a</span>');
+                }
+                if (message.includes('边b')) {
+                    coloredMessage = coloredMessage.replace(/b/g, '<span class="text-blue-600">b</span>');
+                }
+                if (message.includes('斜边c')) {
+                    coloredMessage = coloredMessage.replace(/c/g, '<span class="text-green-600">c</span>');
+                }
+                if (message.includes('面积')) {
+                    coloredMessage = coloredMessage.replace(/(\d+)/, '<span class="font-bold">$1</span>');
+                }
+                
+                popup.innerHTML = `
+                    <p class="text-gray-800 text-sm">${coloredMessage}</p>
+                    <button id="close-popup" class="mt-3 text-xs bg-primary text-white px-3 py-1 rounded hover:bg-primary/90 transition-colors">
+                        关闭
+                    </button>
+                `;
+                
+                document.body.appendChild(popup);
+                
+                // 添加弹出动画
+                setTimeout(() => {
+                    popup.style.transition = 'all 0.3s ease';
+                    popup.style.scale = '1';
+                    popup.style.opacity = '1';
+                }, 10);
+                
+                // 添加关闭事件
+                document.getElementById('close-popup').addEventListener('click', function() {
+                    popup.style.scale = '0.95';
+                    popup.style.opacity = '0';
+                    setTimeout(() => popup.remove(), 300);
+                });
+                
+                // 点击外部关闭
+                popup.addEventListener('click', function(e) {
+                    if (e.target === popup) {
+                        popup.style.scale = '0.95';
+                        popup.style.opacity = '0';
+                        setTimeout(() => popup.remove(), 300);
+                    }
+                });
+                
+                // 3秒后自动关闭
+                setTimeout(() => {
+                    if (popup.parentNode) {
+                        popup.style.scale = '0.95';
+                        popup.style.opacity = '0';
+                        setTimeout(() => popup.remove(), 300);
+                    }
+                }, 3000);
+            }
+            
+            // 防抖函数
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+        });
+    </script>
+
+
+    </body></html>
